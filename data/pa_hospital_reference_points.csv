@@ -1,0 +1,11 @@
+name,county,lat,lon,category
+Hospital cluster: Philadelphia,Philadelphia,39.9526,-75.1652,Major academic/urban cluster
+Hospital cluster: Pittsburgh,Allegheny,40.4406,-79.9959,Major academic/urban cluster
+Hospital cluster: Montgomery County,Montgomery,40.229,-75.3879,Suburban hospital cluster
+Hospital cluster: Bucks County,Bucks,40.3369,-75.1071,Suburban hospital cluster
+Hospital cluster: Delaware County,Delaware,39.9168,-75.3879,Suburban hospital cluster
+Lancaster General area,Lancaster,40.0379,-76.3055,Small metro hospital
+Mount Nittany Medical Center area,Centre,40.7934,-77.86,Regional hospital
+Erie hospital area,Erie,42.1292,-80.0851,Small metro hospital
+Wilkes-Barre/Scranton area,Luzerne,41.2459,-75.8813,Small metro hospital
+Williamsport regional area,Lycoming,41.2412,-77.0011,Regional hospital

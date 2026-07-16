@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pennsylvania Hospital Access Prototype</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f8f5;
+      --ink: #17201b;
+      --muted: #5f6c64;
+      --line: #ccd5ce;
+      --green: #2e7d64;
+      --gold: #c98b27;
+      --red: #b14a42;
+      --blue: #2f6690;
+      --panel: #ffffff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+    main { max-width: 1180px; margin: 0 auto; padding: 28px; }
+    header { display: grid; grid-template-columns: 1.4fr .8fr; gap: 20px; align-items: end; margin-bottom: 22px; }
+    h1 { font-size: clamp(26px, 4vw, 48px); line-height: 1.02; margin: 0 0 12px; letter-spacing: 0; }
+    p { margin: 0; color: var(--muted); line-height: 1.55; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .stat, .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .stat b { display: block; font-size: 28px; margin-bottom: 4px; }
+    .stat span { color: var(--muted); font-size: 13px; }
+    .grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 16px; align-items: start; }
+    .map-wrap { position: relative; min-height: 560px; }
+    svg { width: 100%; height: auto; display: block; }
+    .county { cursor: pointer; transition: opacity .15s ease, stroke-width .15s ease; }
+    .county:hover, .county.active { stroke-width: 3; opacity: .9; }
+    .hospital { fill: var(--blue); stroke: var(--panel); stroke-width: 1.5; }
+    .label { font-size: 12px; fill: var(--muted); pointer-events: none; }
+    .legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 12px; color: var(--muted); font-size: 13px; }
+    .key { display: inline-flex; align-items: center; gap: 6px; }
+    .swatch { width: 12px; height: 12px; border-radius: 2px; display: inline-block; }
+    .detail h2 { margin: 0 0 10px; font-size: 22px; }
+    .detail dl { display: grid; grid-template-columns: 1fr auto; gap: 10px 14px; margin: 16px 0; }
+    dt { color: var(--muted); }
+    dd { margin: 0; font-weight: 600; }
+    .bar-row { display: grid; grid-template-columns: 92px 1fr 64px; gap: 10px; align-items: center; margin: 9px 0; font-size: 13px; }
+    .track { height: 9px; background: #e8ede9; border-radius: 999px; overflow: hidden; }
+    .fill { height: 100%; background: var(--green); border-radius: 999px; }
+    .note { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 14px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 14px; }
+    th, td { padding: 9px 8px; border-bottom: 1px solid var(--line); text-align: left; }
+    th { color: var(--muted); font-weight: 600; }
+    @media (max-width: 860px) {
+      main { padding: 18px; }
+      header, .grid { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: 1fr; }
+      .map-wrap { min-height: auto; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <section>
+      <h1>Spatial inequality in hospital access across Pennsylvania</h1>
+      <p>A prototype research dashboard connecting geography, public health, and hospital-system planning. Click a county marker to inspect distance to the nearest hospital reference point and hospital supply per 100,000 residents.</p>
+    </section>
+    <section class="stats" aria-label="Project summary">
+      <div class="stat"><b id="countyCount">12</b><span>counties sampled</span></div>
+      <div class="stat"><b id="highCount">0</b><span>high-burden counties</span></div>
+      <div class="stat"><b id="avgDistance">0</b><span>avg. nearest miles</span></div>
+    </section>
+  </header>
+  <section class="grid">
+    <section class="panel map-wrap">
+      <svg id="map" viewBox="0 0 760 570" role="img" aria-label="Schematic map of sampled Pennsylvania county access metrics">
+        <rect x="30" y="30" width="700" height="480" rx="24" fill="#eef3ef" stroke="#ccd5ce"></rect>
+        <path d="M85 200 L185 105 L370 80 L575 120 L690 245 L650 405 L445 465 L245 440 L95 335 Z" fill="#dde8df" stroke="#9ca9a0" stroke-width="2"></path>
+        <g id="counties"></g>
+        <g id="hospitals"></g>
+      </svg>
+      <div class="legend">
+        <span class="key"><span class="swatch" style="background: var(--green)"></span>Lower burden</span>
+        <span class="key"><span class="swatch" style="background: var(--gold)"></span>Moderate burden</span>
+        <span class="key"><span class="swatch" style="background: var(--red)"></span>High burden</span>
+        <span class="key"><span class="swatch" style="background: var(--blue); border-radius: 50%"></span>Hospital reference point</span>
+      </div>
+    </section>
+    <aside class="panel detail" aria-live="polite">
+      <h2 id="detailCounty">Select a county</h2>
+      <p id="detailIntro">This panel updates with access metrics and a professor-facing interpretation.</p>
+      <dl>
+        <dt>County type</dt><dd id="detailType">-</dd>
+        <dt>Population</dt><dd id="detailPop">-</dd>
+        <dt>Nearest hospital</dt><dd id="detailMiles">-</dd>
+        <dt>Hospitals per 100k</dt><dd id="detailRate">-</dd>
+        <dt>Access group</dt><dd id="detailGroup">-</dd>
+      </dl>
+      <div id="bars"></div>
+      <p class="note" id="detailNote">Use this prototype to ask a professor about replacing county centroids with census-tract population centers and drive-time networks.</p>
+    </aside>
+  </section>
+  <section class="panel" style="margin-top:16px">
+    <strong>Ranked access burden table</strong>
+    <table>
+      <thead><tr><th>County</th><th>Type</th><th>Nearest miles</th><th>Hospitals / 100k</th><th>Group</th></tr></thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </section>
+</main>
+<script>
+const data = {"counties": [{"county": "Philadelphia", "lat": 39.9526, "lon": -75.1652, "population": 1550542, "type": "Urban core", "hospitals": 20, "nearest_hospital_miles": 0.0, "hospitals_per_100k": 1.29, "access_group": "Lower access burden"}, {"county": "Allegheny", "lat": 40.4406, "lon": -79.9959, "population": 1230000, "type": "Urban core", "hospitals": 18, "nearest_hospital_miles": 0.0, "hospitals_per_100k": 1.46, "access_group": "Lower access burden"}, {"county": "Montgomery", "lat": 40.229, "lon": -75.3879, "population": 860000, "type": "Suburban", "hospitals": 8, "nearest_hospital_miles": 0.0, "hospitals_per_100k": 0.93, "access_group": "Moderate access burden"}, {"county": "Bucks", "lat": 40.3369, "lon": -75.1071, "population": 646000, "type": "Suburban", "hospitals": 5, "nearest_hospital_miles": 0.0, "hospitals_per_100k": 0.77, "access_group": "Moderate access burden"}, {"county": "Delaware", "lat": 39.9168, "lon": -75.3879, "population": 576000, "type": "Suburban", "hospitals": 5, "nearest_hospital_miles": 0.0, "hospitals_per_100k": 0.87, "access_group": "Moderate access burden"}, {"county": "Lancaster", "lat": 40.0379, "lon": -76.3055, "population": 553000, "type": "Small metro", "hospitals": 4, "nearest_hospital_miles": 0.0, "hospitals_per_100k": 0.72, "access_group": "Moderate access burden"}, {"county": "Centre", "lat": 40.7934, "lon": -77.86, "population": 158000, "type": "College/rural", "hospitals": 1, "nearest_hospital_miles": 0.0, "hospitals_per_100k": 0.63, "access_group": "Moderate access burden"}, {"county": "Erie", "lat": 42.1292, "lon": -80.0851, "population": 270000, "type": "Small metro", "hospitals": 3, "nearest_hospital_miles": 0.0, "hospitals_per_100k": 1.11, "access_group": "Lower access burden"}, {"county": "Luzerne", "lat": 41.2459, "lon": -75.8813, "population": 326000, "type": "Small metro", "hospitals": 3, "nearest_hospital_miles": 0.0, "hospitals_per_100k": 0.92, "access_group": "Moderate access burden"}, {"county": "Lycoming", "lat": 41.2412, "lon": -77.0011, "population": 114000, "type": "Rural", "hospitals": 1, "nearest_hospital_miles": 0.0, "hospitals_per_100k": 0.88, "access_group": "Moderate access burden"}, {"county": "Tioga", "lat": 41.7487, "lon": -77.3005, "population": 41000, "type": "Rural", "hospitals": 0, "nearest_hospital_miles": 38.3, "hospitals_per_100k": 0.0, "access_group": "High access burden"}, {"county": "Cameron", "lat": 41.4388, "lon": -78.1986, "population": 4500, "type": "Rural", "hospitals": 0, "nearest_hospital_miles": 48.0, "hospitals_per_100k": 0.0, "access_group": "High access burden"}], "hospitals": [{"name": "Hospital cluster: Philadelphia", "county": "Philadelphia", "lat": 39.9526, "lon": -75.1652, "category": "Major academic/urban cluster"}, {"name": "Hospital cluster: Pittsburgh", "county": "Allegheny", "lat": 40.4406, "lon": -79.9959, "category": "Major academic/urban cluster"}, {"name": "Hospital cluster: Montgomery County", "county": "Montgomery", "lat": 40.229, "lon": -75.3879, "category": "Suburban hospital cluster"}, {"name": "Hospital cluster: Bucks County", "county": "Bucks", "lat": 40.3369, "lon": -75.1071, "category": "Suburban hospital cluster"}, {"name": "Hospital cluster: Delaware County", "county": "Delaware", "lat": 39.9168, "lon": -75.3879, "category": "Suburban hospital cluster"}, {"name": "Lancaster General area", "county": "Lancaster", "lat": 40.0379, "lon": -76.3055, "category": "Small metro hospital"}, {"name": "Mount Nittany Medical Center area", "county": "Centre", "lat": 40.7934, "lon": -77.86, "category": "Regional hospital"}, {"name": "Erie hospital area", "county": "Erie", "lat": 42.1292, "lon": -80.0851, "category": "Small metro hospital"}, {"name": "Wilkes-Barre/Scranton area", "county": "Luzerne", "lat": 41.2459, "lon": -75.8813, "category": "Small metro hospital"}, {"name": "Williamsport regional area", "county": "Lycoming", "lat": 41.2412, "lon": -77.0011, "category": "Regional hospital"}]};
+const bounds = { minLon: -80.6, maxLon: -74.7, minLat: 39.6, maxLat: 42.4 };
+const color = {
+  "Lower access burden": "var(--green)",
+  "Moderate access burden": "var(--gold)",
+  "High access burden": "var(--red)"
+};
+function xy(lat, lon) {
+  const x = 85 + (lon - bounds.minLon) / (bounds.maxLon - bounds.minLon) * 590;
+  const y = 455 - (lat - bounds.minLat) / (bounds.maxLat - bounds.minLat) * 350;
+  return [x, y];
+}
+function fmt(n) { return new Intl.NumberFormat("en-US").format(n); }
+function selectCounty(row) {
+  document.querySelectorAll(".county").forEach(el => el.classList.toggle("active", el.dataset.county === row.county));
+  document.getElementById("detailCounty").textContent = row.county + " County";
+  document.getElementById("detailIntro").textContent = row.county + " is classified as " + row.access_group.toLowerCase() + " in this prototype.";
+  document.getElementById("detailType").textContent = row.type;
+  document.getElementById("detailPop").textContent = fmt(row.population);
+  document.getElementById("detailMiles").textContent = row.nearest_hospital_miles + " mi";
+  document.getElementById("detailRate").textContent = row.hospitals_per_100k;
+  document.getElementById("detailGroup").textContent = row.access_group;
+  document.getElementById("detailNote").textContent = row.access_group === "High access burden"
+    ? "Research implication: this county should be tested with real drive-time data, ambulance coverage, referral pathways, and telehealth availability."
+    : "Research implication: supply alone is not enough; population pressure, insurance mix, specialty care, and travel time should be added next.";
+  const maxMiles = Math.max(...data.counties.map(d => d.nearest_hospital_miles));
+  const maxRate = Math.max(...data.counties.map(d => d.hospitals_per_100k));
+  document.getElementById("bars").innerHTML = `
+    <div class="bar-row"><span>Distance</span><div class="track"><div class="fill" style="width:${Math.max(4, row.nearest_hospital_miles / maxMiles * 100)}%; background:${color[row.access_group]}"></div></div><span>${row.nearest_hospital_miles} mi</span></div>
+    <div class="bar-row"><span>Supply</span><div class="track"><div class="fill" style="width:${Math.max(4, row.hospitals_per_100k / maxRate * 100)}%; background:var(--blue)"></div></div><span>${row.hospitals_per_100k}</span></div>
+  `;
+}
+const countyLayer = document.getElementById("counties");
+data.counties.forEach(row => {
+  const [x, y] = xy(row.lat, row.lon);
+  const r = Math.max(9, Math.min(30, Math.sqrt(row.population) / 42));
+  const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  g.innerHTML = `<circle class="county" data-county="${row.county}" cx="${x}" cy="${y}" r="${r}" fill="${color[row.access_group]}" fill-opacity=".72" stroke="#17201b"></circle><text class="label" x="${x + r + 4}" y="${y + 4}">${row.county}</text>`;
+  g.querySelector("circle").addEventListener("click", () => selectCounty(row));
+  countyLayer.appendChild(g);
+});
+const hospitalLayer = document.getElementById("hospitals");
+data.hospitals.forEach(row => {
+  const [x, y] = xy(row.lat, row.lon);
+  const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+  c.setAttribute("class", "hospital");
+  c.setAttribute("cx", x);
+  c.setAttribute("cy", y);
+  c.setAttribute("r", 5);
+  hospitalLayer.appendChild(c);
+});
+const sorted = [...data.counties].sort((a, b) => b.nearest_hospital_miles - a.nearest_hospital_miles);
+document.getElementById("tableBody").innerHTML = sorted.map(row => `<tr><td>${row.county}</td><td>${row.type}</td><td>${row.nearest_hospital_miles}</td><td>${row.hospitals_per_100k}</td><td>${row.access_group}</td></tr>`).join("");
+document.getElementById("highCount").textContent = data.counties.filter(d => d.access_group === "High access burden").length;
+document.getElementById("avgDistance").textContent = (data.counties.reduce((s, d) => s + d.nearest_hospital_miles, 0) / data.counties.length).toFixed(1);
+selectCounty(sorted[0]);
+</script>
+</body>
+</html>

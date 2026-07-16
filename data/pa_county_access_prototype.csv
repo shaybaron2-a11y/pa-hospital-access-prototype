@@ -1,0 +1,13 @@
+county,lat,lon,population,type,hospitals,nearest_hospital_miles,hospitals_per_100k,access_group
+Philadelphia,39.9526,-75.1652,1550542,Urban core,20,0.0,1.29,Lower access burden
+Allegheny,40.4406,-79.9959,1230000,Urban core,18,0.0,1.46,Lower access burden
+Montgomery,40.229,-75.3879,860000,Suburban,8,0.0,0.93,Moderate access burden
+Bucks,40.3369,-75.1071,646000,Suburban,5,0.0,0.77,Moderate access burden
+Delaware,39.9168,-75.3879,576000,Suburban,5,0.0,0.87,Moderate access burden
+Lancaster,40.0379,-76.3055,553000,Small metro,4,0.0,0.72,Moderate access burden
+Centre,40.7934,-77.86,158000,College/rural,1,0.0,0.63,Moderate access burden
+Erie,42.1292,-80.0851,270000,Small metro,3,0.0,1.11,Lower access burden
+Luzerne,41.2459,-75.8813,326000,Small metro,3,0.0,0.92,Moderate access burden
+Lycoming,41.2412,-77.0011,114000,Rural,1,0.0,0.88,Moderate access burden
+Tioga,41.7487,-77.3005,41000,Rural,0,38.3,0.0,High access burden
+Cameron,41.4388,-78.1986,4500,Rural,0,48.0,0.0,High access burden

@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pennsylvania Hospital Access Prototype</title>
+  <style>
+    :root {
+      --bg: #f6f7f3;
+      --ink: #18201b;
+      --muted: #667269;
+      --panel: #ffffff;
+      --line: #ccd5ce;
+      --green: #2f7d62;
+      --gold: #c9892b;
+      --red: #b74b43;
+      --blue: #2f6690;
+      --violet: #7467a9;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main { max-width: 1180px; margin: 0 auto; padding: 30px; }
+    header {
+      display: grid;
+      grid-template-columns: 1.35fr .9fr;
+      gap: 22px;
+      align-items: end;
+      margin-bottom: 18px;
+    }
+    h1 { margin: 0 0 12px; font-size: clamp(30px, 5vw, 58px); line-height: 1.01; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 21px; }
+    p { margin: 0; color: var(--muted); line-height: 1.55; }
+    .kpis, .cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .card, .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .card b { display: block; font-size: 28px; margin-bottom: 4px; }
+    .card span, .caption { color: var(--muted); font-size: 13px; }
+    .grid { display: grid; grid-template-columns: 1.14fr .86fr; gap: 16px; align-items: start; }
+    .map-panel { min-height: 580px; }
+    svg { width: 100%; height: auto; display: block; }
+    .county { cursor: pointer; transition: opacity .15s ease, stroke-width .15s ease, transform .15s ease; }
+    .county:hover, .county.active { opacity: .95; stroke-width: 3; }
+    .hospital { fill: var(--blue); stroke: var(--panel); stroke-width: 1.5; }
+    .label { fill: var(--muted); font-size: 12px; pointer-events: none; }
+    .legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 12px; color: var(--muted); font-size: 13px; }
+    .key { display: inline-flex; align-items: center; gap: 6px; }
+    .swatch { width: 12px; height: 12px; border-radius: 2px; display: inline-block; }
+    dl { display: grid; grid-template-columns: 1fr auto; gap: 9px 14px; margin: 14px 0; }
+    dt { color: var(--muted); }
+    dd { margin: 0; font-weight: 650; }
+    .bar-row { display: grid; grid-template-columns: 105px 1fr 62px; gap: 10px; align-items: center; margin: 9px 0; font-size: 13px; }
+    .track { height: 9px; background: #e7ece8; border-radius: 999px; overflow: hidden; }
+    .fill { height: 100%; border-radius: 999px; }
+    .note { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 14px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+    th, td { padding: 9px 8px; border-bottom: 1px solid var(--line); text-align: left; }
+    th { color: var(--muted); font-weight: 650; }
+    .scatter-point { cursor: pointer; }
+    .source-box { margin-top: 16px; display: grid; grid-template-columns: .9fr 1.1fr; gap: 14px; }
+    .pill { display: inline-block; margin-top: 10px; padding: 5px 8px; border-radius: 999px; background: #e9eee9; color: var(--muted); font-size: 12px; }
+    @media (max-width: 900px) {
+      main { padding: 18px; }
+      header, .grid, .source-box { grid-template-columns: 1fr; }
+      .kpis, .cards { grid-template-columns: 1fr; }
+      .map-panel { min-height: auto; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <section>
+      <h1>Spatial inequality in hospital access across Pennsylvania</h1>
+      <p>A GitHub portfolio prototype connecting health geography, hospital administration, and public-health planning. It demonstrates a reproducible workflow for identifying counties where hospital supply, travel burden, and social vulnerability should be studied together.</p>
+      <span class="pill">Prototype for faculty outreach, not a final peer-reviewed estimate</span>
+    </section>
+    <section class="kpis" aria-label="Project metrics">
+      <div class="card"><b id="countyCount">12</b><span>sample counties</span></div>
+      <div class="card"><b id="highCount">0</b><span>high access burden</span></div>
+      <div class="card"><b id="avgScore">0</b><span>mean priority score</span></div>
+    </section>
+  </header>
+
+  <section class="grid">
+    <section class="panel map-panel">
+      <svg id="map" viewBox="0 0 760 570" role="img" aria-label="Schematic Pennsylvania map with county access burden markers">
+        <rect x="30" y="30" width="700" height="480" rx="24" fill="#edf3ee" stroke="#ccd5ce"></rect>
+        <path d="M85 200 L185 105 L370 80 L575 120 L690 245 L650 405 L445 465 L245 440 L95 335 Z" fill="#dde8df" stroke="#9ba9a0" stroke-width="2"></path>
+        <g id="counties"></g>
+        <g id="hospitals"></g>
+      </svg>
+      <div class="legend">
+        <span class="key"><span class="swatch" style="background: var(--green)"></span>Lower burden</span>
+        <span class="key"><span class="swatch" style="background: var(--gold)"></span>Moderate burden</span>
+        <span class="key"><span class="swatch" style="background: var(--red)"></span>High burden</span>
+        <span class="key"><span class="swatch" style="background: var(--blue); border-radius: 50%"></span>Hospital reference point</span>
+      </div>
+    </section>
+
+    <aside class="panel" aria-live="polite">
+      <h2 id="detailCounty">Select a county</h2>
+      <p id="detailIntro">Click a county marker or scatterplot point to inspect its access profile.</p>
+      <dl>
+        <dt>County type</dt><dd id="detailType">-</dd>
+        <dt>Population</dt><dd id="detailPop">-</dd>
+        <dt>Nearest hospital</dt><dd id="detailMiles">-</dd>
+        <dt>Hospitals per 100k</dt><dd id="detailRate">-</dd>
+        <dt>Age 65+</dt><dd id="detailAge">-</dd>
+        <dt>Poverty</dt><dd id="detailPoverty">-</dd>
+        <dt>Priority score</dt><dd id="detailScore">-</dd>
+      </dl>
+      <div id="bars"></div>
+      <p class="note" id="detailNote">A stronger study would replace this county-level prototype with tract-level Census ACS data, verified CMS/HIFLD facilities, and drive-time networks.</p>
+    </aside>
+  </section>
+
+  <section class="source-box">
+    <section class="panel">
+      <h2>Access burden model</h2>
+      <p class="caption">The priority score combines nearest-hospital distance, hospital supply per 100,000 residents, older-adult share, poverty, uninsured share, and rurality. It is designed to show research logic rather than claim final policy estimates.</p>
+      <div class="cards" style="margin-top:12px">
+        <div class="card"><b>Distance</b><span>Potential transport burden</span></div>
+        <div class="card"><b>Supply</b><span>Hospital availability per population</span></div>
+        <div class="card"><b>Vulnerability</b><span>Age, poverty, insurance, rurality</span></div>
+      </div>
+    </section>
+    <section class="panel">
+      <h2>Priority score vs. hospital supply</h2>
+      <svg id="scatter" viewBox="0 0 560 310" role="img" aria-label="Scatterplot comparing hospital supply and priority score">
+        <line x1="55" y1="250" x2="520" y2="250" stroke="#9ba9a0"></line>
+        <line x1="55" y1="30" x2="55" y2="250" stroke="#9ba9a0"></line>
+        <text x="55" y="283" class="label">Hospitals per 100k residents</text>
+        <text x="6" y="36" class="label" transform="rotate(-90 14,36)">Priority score</text>
+        <g id="scatterLayer"></g>
+      </svg>
+    </section>
+  </section>
+
+  <section class="panel" style="margin-top:16px">
+    <h2>Ranked county table</h2>
+    <table>
+      <thead><tr><th>County</th><th>Type</th><th>Nearest mi.</th><th>Hospitals / 100k</th><th>Age 65+</th><th>Poverty</th><th>Priority</th></tr></thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </section>
+</main>
+
+<script>
+const counties = [
+  { county: "Philadelphia", lat: 39.9526, lon: -75.1652, population: 1550542, type: "Urban core", hospitals: 20, nearest: 0.0, rate: 1.29, age65: 14.7, poverty: 21.7, uninsured: 6.7, rurality: 0, group: "Lower access burden" },
+  { county: "Allegheny", lat: 40.4406, lon: -79.9959, population: 1230000, type: "Urban core", hospitals: 18, nearest: 0.0, rate: 1.46, age65: 19.4, poverty: 11.5, uninsured: 4.8, rurality: 0, group: "Lower access burden" },
+  { county: "Montgomery", lat: 40.2290, lon: -75.3879, population: 860000, type: "Suburban", hospitals: 8, nearest: 0.0, rate: 0.93, age65: 18.0, poverty: 6.2, uninsured: 4.9, rurality: 1, group: "Moderate access burden" },
+  { county: "Bucks", lat: 40.3369, lon: -75.1071, population: 646000, type: "Suburban", hospitals: 5, nearest: 0.0, rate: 0.77, age65: 20.0, poverty: 6.1, uninsured: 4.7, rurality: 1, group: "Moderate access burden" },
+  { county: "Delaware", lat: 39.9168, lon: -75.3879, population: 576000, type: "Suburban", hospitals: 5, nearest: 0.0, rate: 0.87, age65: 17.1, poverty: 10.1, uninsured: 5.0, rurality: 1, group: "Moderate access burden" },
+  { county: "Lancaster", lat: 40.0379, lon: -76.3055, population: 553000, type: "Small metro", hospitals: 4, nearest: 0.0, rate: 0.72, age65: 17.4, poverty: 9.2, uninsured: 8.7, rurality: 2, group: "Moderate access burden" },
+  { county: "Centre", lat: 40.7934, lon: -77.8600, population: 158000, type: "College/rural", hospitals: 1, nearest: 0.0, rate: 0.63, age65: 14.5, poverty: 18.2, uninsured: 5.3, rurality: 2, group: "Moderate access burden" },
+  { county: "Erie", lat: 42.1292, lon: -80.0851, population: 270000, type: "Small metro", hospitals: 3, nearest: 0.0, rate: 1.11, age65: 19.1, poverty: 15.3, uninsured: 5.4, rurality: 2, group: "Lower access burden" },
+  { county: "Luzerne", lat: 41.2459, lon: -75.8813, population: 326000, type: "Small metro", hospitals: 3, nearest: 0.0, rate: 0.92, age65: 20.6, poverty: 13.7, uninsured: 5.7, rurality: 2, group: "Moderate access burden" },
+  { county: "Lycoming", lat: 41.2412, lon: -77.0011, population: 114000, type: "Rural", hospitals: 1, nearest: 0.0, rate: 0.88, age65: 21.0, poverty: 13.6, uninsured: 6.4, rurality: 3, group: "Moderate access burden" },
+  { county: "Tioga", lat: 41.7487, lon: -77.3005, population: 41000, type: "Rural", hospitals: 0, nearest: 38.3, rate: 0.0, age65: 23.1, poverty: 13.4, uninsured: 7.3, rurality: 4, group: "High access burden" },
+  { county: "Cameron", lat: 41.4388, lon: -78.1986, population: 4500, type: "Rural", hospitals: 0, nearest: 48.0, rate: 0.0, age65: 28.0, poverty: 14.8, uninsured: 6.8, rurality: 4, group: "High access burden" }
+];
+const hospitals = [
+  { lat: 39.9526, lon: -75.1652 }, { lat: 40.4406, lon: -79.9959 }, { lat: 40.2290, lon: -75.3879 },
+  { lat: 40.3369, lon: -75.1071 }, { lat: 39.9168, lon: -75.3879 }, { lat: 40.0379, lon: -76.3055 },
+  { lat: 40.7934, lon: -77.8600 }, { lat: 42.1292, lon: -80.0851 }, { lat: 41.2459, lon: -75.8813 },
+  { lat: 41.2412, lon: -77.0011 }
+];
+const bounds = { minLon: -80.6, maxLon: -74.7, minLat: 39.6, maxLat: 42.4 };
+const palette = { "Lower access burden": "var(--green)", "Moderate access burden": "var(--gold)", "High access burden": "var(--red)" };
+function xy(lat, lon) {
+  return [85 + (lon - bounds.minLon) / (bounds.maxLon - bounds.minLon) * 590, 455 - (lat - bounds.minLat) / (bounds.maxLat - bounds.minLat) * 350];
+}
+function score(d) {
+  const distance = Math.min(d.nearest / 50, 1) * 35;
+  const supplyGap = Math.max(0, 1.25 - d.rate) / 1.25 * 25;
+  const vulnerability = (d.age65 / 30 * 13) + (d.poverty / 25 * 12) + (d.uninsured / 10 * 8) + (d.rurality / 4 * 7);
+  return Math.round(distance + supplyGap + vulnerability);
+}
+function fmt(n) { return new Intl.NumberFormat("en-US").format(n); }
+function selectCounty(row) {
+  document.querySelectorAll(".county,.scatter-point").forEach(el => el.classList.toggle("active", el.dataset.county === row.county));
+  document.getElementById("detailCounty").textContent = row.county + " County";
+  document.getElementById("detailIntro").textContent = row.group + " in this prototype, with a priority score of " + row.priority + ".";
+  document.getElementById("detailType").textContent = row.type;
+  document.getElementById("detailPop").textContent = fmt(row.population);
+  document.getElementById("detailMiles").textContent = row.nearest + " mi";
+  document.getElementById("detailRate").textContent = row.rate;
+  document.getElementById("detailAge").textContent = row.age65 + "%";
+  document.getElementById("detailPoverty").textContent = row.poverty + "%";
+  document.getElementById("detailScore").textContent = row.priority;
+  document.getElementById("detailNote").textContent = row.group === "High access burden"
+    ? "Research implication: prioritize drive-time validation, ambulance coverage, referral networks, and telehealth capacity."
+    : "Research implication: add specialty care, bed capacity, insurance mix, and tract-level demand before drawing policy conclusions.";
+  const bars = [
+    ["Distance", row.nearest, 50, palette[row.group], " mi"],
+    ["Supply gap", Math.max(0, 1.25 - row.rate), 1.25, "var(--blue)", ""],
+    ["Older adults", row.age65, 30, "var(--violet)", "%"],
+    ["Poverty", row.poverty, 25, "var(--red)", "%"]
+  ];
+  document.getElementById("bars").innerHTML = bars.map(([label, value, max, color, unit]) =>
+    `<div class="bar-row"><span>${label}</span><div class="track"><div class="fill" style="width:${Math.max(3, value / max * 100)}%; background:${color}"></div></div><span>${Number(value).toFixed(unit ? 1 : 2)}${unit}</span></div>`
+  ).join("");
+}
+counties.forEach(d => d.priority = score(d));
+document.getElementById("countyCount").textContent = counties.length;
+document.getElementById("highCount").textContent = counties.filter(d => d.group === "High access burden").length;
+document.getElementById("avgScore").textContent = Math.round(counties.reduce((s, d) => s + d.priority, 0) / counties.length);
+const countyLayer = document.getElementById("counties");
+counties.forEach(row => {
+  const [x, y] = xy(row.lat, row.lon);
+  const r = Math.max(9, Math.min(30, Math.sqrt(row.population) / 42));
+  const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  g.innerHTML = `<circle class="county" data-county="${row.county}" cx="${x}" cy="${y}" r="${r}" fill="${palette[row.group]}" fill-opacity=".72" stroke="#18201b"></circle><text class="label" x="${x + r + 4}" y="${y + 4}">${row.county}</text>`;
+  g.querySelector("circle").addEventListener("click", () => selectCounty(row));
+  countyLayer.appendChild(g);
+});
+const hospitalLayer = document.getElementById("hospitals");
+hospitals.forEach(row => {
+  const [x, y] = xy(row.lat, row.lon);
+  const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+  c.setAttribute("class", "hospital");
+  c.setAttribute("cx", x);
+  c.setAttribute("cy", y);
+  c.setAttribute("r", 5);
+  hospitalLayer.appendChild(c);
+});
+const scatter = document.getElementById("scatterLayer");
+const maxRate = Math.max(...counties.map(d => d.rate));
+const maxPriority = Math.max(...counties.map(d => d.priority));
+counties.forEach(row => {
+  const x = 55 + row.rate / maxRate * 440;
+  const y = 250 - row.priority / maxPriority * 205;
+  const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+  c.setAttribute("class", "scatter-point");
+  c.setAttribute("data-county", row.county);
+  c.setAttribute("cx", x);
+  c.setAttribute("cy", y);
+  c.setAttribute("r", row.group === "High access burden" ? 8 : 6);
+  c.setAttribute("fill", palette[row.group]);
+  c.setAttribute("stroke", "#18201b");
+  c.addEventListener("click", () => selectCounty(row));
+  scatter.appendChild(c);
+});
+document.getElementById("tableBody").innerHTML = [...counties].sort((a, b) => b.priority - a.priority).map(row =>
+  `<tr><td>${row.county}</td><td>${row.type}</td><td>${row.nearest}</td><td>${row.rate}</td><td>${row.age65}%</td><td>${row.poverty}%</td><td>${row.priority}</td></tr>`
+).join("");
+selectCounty([...counties].sort((a, b) => b.priority - a.priority)[0]);
+</script>
+</body>
+</html>

@@ -14,4 +14,5 @@ Interactive display page for the Pennsylvania hospital access prototype.
 - `figures/interactive_hospital_access_map.html`: interactive map display.
 - `data/`: prototype data used by the displays.
 - `scripts/build_project.py`: script for rebuilding the display assets.
+- `one_page_project_pitch.md`: research summary.
 - `DATA_SOURCES.md`: data-source notes.

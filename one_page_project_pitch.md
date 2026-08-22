@@ -10,6 +10,6 @@
 
 **Current prototype:** I built a small reproducible prototype using county-level population, hospital reference points, nearest-distance calculations, hospitals per 100,000 residents, and an interactive dashboard.
 
-**What I want to learn next:** I hope to improve this project using official provider data, Census tract data, real drive-time analysis, and stronger public health methods.
+**What I want to learn next:** I hope to work with a faculty mentor to improve this project using official provider data, Census tract data, real drive-time analysis, and stronger public health methods.
 
-**Skills represented:** literature review, data cleaning, Excel/CSV work, basic statistics, GIS mapping, and healthcare system background research.
+**Skills I can contribute now:** literature review, data cleaning, Excel/CSV work, basic statistics, GIS mapping, healthcare system background research, and China healthcare context from my Sinopharm internship.

@@ -1,70 +1,44 @@
 # Pennsylvania Hospital Access Prototype
 
-**Live entry point for GitHub Pages:** open `index.html`.
+Interactive GitHub Pages dashboard for exploring spatial inequality in hospital access across Pennsylvania.
+
+## What changed
+
+The dashboard now uses a reproducible official-data snapshot instead of the original 12-county demonstration values. It includes all 67 Pennsylvania counties and 109 geocoded CMS acute-care hospital records retrieved on 2026-08-22.
+
+Interactive features include:
+
+- county search and population-band/access-group filters;
+- synchronized map, scatterplot, detail panel, and comparison table;
+- map color modes for access group, priority, distance, and hospital supply;
+- selectable county records with metric bars and per-record source links;
+- visible-row CSV export;
+- keyboard-accessible map and chart markers;
+- explicit provenance and limitations for original versus derived metrics.
+
+## Run locally
+
+The page is static and can be opened directly as `index.html`. To rebuild the official snapshot:
+
+```powershell
+python scripts/fetch_official_data.py
+```
+
+The script writes:
+
+- `data/pa_access_official.js`: page-ready JSON snapshot;
+- `data/pa_county_access_official.csv`: county metrics and source fields;
+- `data/pa_hospitals_official.csv`: CMS hospital records and geocoded coordinates;
+- `data/pa_access_metadata.json`: source registry and retrieval date.
 
 ## Research question
 
-Do Pennsylvania counties show unequal spatial access to hospital care, and how could a student combine geography, public health, and hospital-system thinking to identify areas that may need better referral networks, telehealth support, or transportation planning?
-
-## Why this project fits my academic direction
-
-This project is designed as a small research sample for faculty outreach. It connects:
-
-- health geography and GIS;
-- hospital access and regional inequality;
-- public health policy;
-- hospital administration and planning.
-
-My long-term interest is to work with physicians and public hospital systems on resource allocation, patient access, and health-system management.
-
-## Prototype findings
-
-- Rural counties in the sample show the highest access burden because they have either no local hospital point in the prototype or a longer distance to the nearest regional hospital.
-- Large urban counties have far more hospitals, but population pressure means hospitals per 100,000 residents can still be an important second metric.
-- The strongest next research step is to replace county centroids with census tract/block-group population centers and use drive-time networks rather than straight-line distance.
-
-Highest-burden counties in this prototype:
-
-| County | Type | Nearest hospital miles | Hospitals per 100k | Access group |
-|---|---:|---:|---:|---|
-| Cameron | Rural | 48.0 | 0.0 | High access burden |
-| Tioga | Rural | 38.3 | 0.0 | High access burden |
-| Centre | College/rural | 0.0 | 0.63 | Moderate access burden |
-| Lancaster | Small metro | 0.0 | 0.72 | Moderate access burden |
-| Bucks | Suburban | 0.0 | 0.77 | Moderate access burden |
-
-## Files
-
-- `index.html`: GitHub Pages-ready visual portfolio page.
-- `figures/interactive_hospital_access_map.html`: interactive map-style dashboard for professor outreach.
-- `data/pa_county_access_prototype.csv`: county-level access metrics used by the dashboard.
-- `data/pa_hospital_reference_points.csv`: hospital reference points used for nearest-distance calculations.
-- `scripts/build_project.py`: reproducible script that generates the data, dashboard, and outreach materials.
-- `DATA_SOURCES.md`: recommended official data sources and validation plan.
-- `professor_email_template.md`: email template for contacting faculty.
-- `one_page_project_pitch.md`: one-page project summary suitable for attaching to an email.
-
-## Important note on data
-
-This is a polished prototype, not a final peer-reviewed dataset. County populations, vulnerability variables, and hospital locations are simplified reference values used to demonstrate a research workflow. A stronger version should use:
-
-- HIFLD or CMS provider-level hospital data;
-- Census ACS population by tract or block group;
-- road-network travel time using ArcGIS Network Analyst, OpenRouteService, or OSRM;
-- hospital service type, bed capacity, and emergency department availability.
+Which Pennsylvania counties appear to have weaker geographic access to acute-care hospitals, and how could a stronger study connect these patterns to transportation, referral networks, telehealth, and hospital-system planning?
 
 ## Methods
 
-1. Define county reference points and hospital reference points.
-2. Calculate great-circle distance from each county to the nearest hospital point.
-3. Compute hospitals per 100,000 residents.
-4. Classify counties into lower, moderate, or high access burden.
-5. Visualize the relationship between geography, population, and hospital access.
+The current snapshot uses ACS population and vulnerability estimates, CMS Hospital General Information records, Census TIGERweb county boundaries, and Census Geocoder address coordinates. The page derives centroid-to-hospital great-circle distance, acute-care hospitals per 100,000 residents, a population-threshold band, and an exploratory priority score.
 
-## How I would expand this with a professor
+## Important limitations
 
-- Move from counties to census tracts.
-- Compare straight-line distance with true drive-time access.
-- Add age structure, income, insurance status, and rurality.
-- Build a model predicting high access burden.
-- Connect findings to hospital referral networks and public health planning.
+This is a research prototype, not a validated policy or clinical model. The distance metric is straight-line distance from a county polygon centroid, not drive time. Hospital count does not represent beds, specialty capacity, quality, or referral availability. ACS release vintage is retained per county and may be 1-year or 5-year depending on the returned official release. See [`DATA_SOURCES.md`](DATA_SOURCES.md) for the source registry and validation plan.

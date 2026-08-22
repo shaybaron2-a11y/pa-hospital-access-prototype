@@ -153,45 +153,6 @@ This is a polished prototype, not a final peer-reviewed dataset. County populati
     (ROOT / "README.md").write_text(readme, encoding="utf-8")
 
 
-def write_pitch():
-    pitch = """# One-page project pitch
-
-**Working title:** Spatial inequality in hospital access across Pennsylvania
-
-**Core idea:** I want to understand how healthcare resources are distributed across space and whether rural or lower-resource communities face a higher access burden when seeking hospital care.
-
-**Research question:** Which Pennsylvania counties appear to have weaker geographic access to hospitals, and how could hospital systems or public agencies use spatial analysis to plan referral networks, transportation support, telehealth, or regional partnerships?
-
-**Why it matters:** Hospital care is not only a clinical issue. It is also a geography, management, and public policy issue. Patients may live far from hospitals, hospitals may be concentrated in urban academic centers, and public systems need better ways to identify access gaps.
-
-**Current prototype:** I built a small reproducible prototype using county-level population, hospital reference points, nearest-distance calculations, hospitals per 100,000 residents, and an interactive dashboard.
-
-**What I want to learn next:** I hope to work with a faculty mentor to improve this project using official provider data, Census tract data, real drive-time analysis, and stronger public health methods.
-
-**Skills I can contribute now:** literature review, data cleaning, Excel/CSV work, basic statistics, GIS mapping, healthcare system background research, and China healthcare context from my Sinopharm internship.
-"""
-    (ROOT / "one_page_project_pitch.md").write_text(pitch, encoding="utf-8")
-
-
-def write_email():
-    email = """Subject: Undergraduate interested in health geography and hospital access research
-
-Dear Professor [Last Name],
-
-My name is [Your Name], and I am a sophomore at Penn State interested in the intersection of healthcare, geography, and public health. I am especially interested in hospital access, medical resource distribution, and how public health systems can use spatial analysis to support better planning.
-
-I recently built a small prototype project on Pennsylvania hospital access. It compares county-level population, hospital reference points, nearest-hospital distance, and hospitals per 100,000 residents. The project is still preliminary, but I used it to practice turning a healthcare question into a reproducible spatial analysis workflow.
-
-I read your work on [specific paper/project], especially your discussion of [specific detail]. I would be grateful for the opportunity to assist with your research, even through literature review, data cleaning, mapping, or basic analysis.
-
-Would you be open to a 15-minute meeting sometime in the next few weeks? I would appreciate any advice on whether my interests could fit your current projects.
-
-Best regards,
-[Your Name]
-"""
-    (ROOT / "professor_email_template.md").write_text(email, encoding="utf-8")
-
-
 def write_html(rows):
     payload = json.dumps({"counties": rows, "hospitals": HOSPITALS}, ensure_ascii=False)
     html = f"""<!doctype html>
@@ -381,8 +342,6 @@ def main():
     rows = build_metrics()
     write_csv(rows)
     write_readme(rows)
-    write_pitch()
-    write_email()
     write_html(rows)
 
 
